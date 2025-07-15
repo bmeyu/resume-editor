@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能简历编辑器 - 优化PDF导出</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #3b82f6;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --toolbar-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --page-color: #ffffff;
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --text-dark: #e2e8f0;
+            --text-light: #94a3b8;
+            --bg-light: #1e293b;
+            --border-color: #334155;
+            --toolbar-bg: #0f172a;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+            --page-color: #0f172a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', system-ui, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            transition: background 0.3s;
+            padding: 20px;
+            min-height: 100vh;
+            background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+        }
+        
+        [data-theme="dark"] body {
+            background-image: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 25px;
+        }
+        
+        /* 控制面板样式 */
+        .control-panel {
+            background: var(--toolbar-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .panel-title {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            font-size: 1.2rem;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-group h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-group h3 i {
+            color: var(--primary-color);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn i {
+            font-size: 1.1rem;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+        
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            transform: scale(1.15);
+            border: 2px solid var(--text-dark);
+            box-shadow: 0 0 0 3px var(--primary-color);
+        }
+        
+        .theme-toggle {
+            background: var(--toolbar-bg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            border-radius: 50px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .theme-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .theme-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .export-options .btn {
+            flex: 1;
+        }
+        
+        /* 简历编辑区域 */
+        .resume-container {
+            background: var(--page-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            min-height: 100vh;
+            position: relative;
+            padding: 20px;
+        }
+        
+        .resume-pages {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .resume-page {
+            background: var(--page-color);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            min-height: 297mm;
+            width: 210mm;
+            margin: 0 auto;
+            padding: 30px;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
+        
+        .page-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        /* 照片上传区域 */
+        .photo-container {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 120px;
+            height: 150px;
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f9fafb;
+            z-index: 10;
+        }
+        
+        [data-theme="dark"] .photo-container {
+            background: #1e293b;
+        }
+        
+        .photo-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .photo-placeholder {
+            text-align: center;
+            padding: 15px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .photo-placeholder i {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        
+        .photo-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.5);
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        
+        .photo-container:hover .photo-actions {
+            transform: translateY(0);
+        }
+        
+        .photo-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        
+        .photo-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* 简历头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 20px;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 0.25rem;
+            color: var(--primary-color);
+            outline: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        
+        h1:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .job-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            outline: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .job-title:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 14px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            outline: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .contact-item:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* 模块通用样式 */
+        section {
+            margin-bottom: 1.8rem;
+            padding-bottom: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 18px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 6px;
+            margin-bottom: 1.2rem;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .add-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .add-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* 摘要样式 */
+        .summary {
+            background: rgba(37, 99, 235, 0.05);
+            padding: 1.2rem;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            line-height: 1.7;
+            min-height: 80px;
+            transition: all 0.2s;
+        }
+        
+        .summary:focus {
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+            background: rgba(37, 99, 235, 0.08);
+        }
+        
+        /* 教育经历样式 */
+        .education-item {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            transition: all 0.2s;
+            position: relative;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+        }
+        
+        .education-item:focus-within {
+            background: rgba(37, 99, 235, 0.05);
+        }
+        
+        .edu-header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 0.3rem;
+            gap: 10px;
+        }
+        
+        .school-name {
+            font-weight: 600;
+            font-size: 16px;
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+            flex: 1;
+        }
+        
+        .school-name:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .edu-date {
+            color: var(--text-light);
+            font-size: 14px;
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        
+        .edu-date:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .degree-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .degree-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+        }
+        
+        .degree {
+            font-style: italic;
+            color: var(--text-light);
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+        
+        .degree:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .gpa {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        
+        .gpa input {
+            width: 60px;
+            padding: 3px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        ul {
+            padding-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            position: relative;
+            outline: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        li:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        li::before {
+            content: "•";
+            color: var(--primary-color);
+            position: absolute;
+            left: -1.2rem;
+            font-size: 1.2rem;
+            top: -0.1rem;
+        }
+        
+        /* 经历条目样式 */
+        .experience-item, .project-item {
+            margin-bottom: 1.8rem;
+            padding: 1rem;
+            transition: all 0.2s;
+            position: relative;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+        }
+        
+        .experience-item:focus-within, .project-item:focus-within {
+            background: rgba(37, 99, 235, 0.05);
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 0.3rem;
+            gap: 10px;
+        }
+        
+        .company, .project-name {
+            font-weight: 600;
+            font-size: 16px;
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+            flex: 1;
+        }
+        
+        .company:focus, .project-name:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .date {
+            color: var(--text-light);
+            font-size: 14px;
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        
+        .date:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        .position {
+            font-style: italic;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+            outline: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+        
+        .position:focus {
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* 技能样式 */
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        
+        .skill-tag {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .skill-tag:focus {
+            background: rgba(37, 99, 235, 0.2);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* AI提示区域 */
+        .ai-tips {
+            background: rgba(37, 99, 235, 0.05);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1.5rem;
+            font-size: 14px;
+        }
+        
+        .ai-tips strong {
+            color: var(--primary-color);
+        }
+        
+        .ai-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(37, 99, 235, 0.05);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .ai-toggle input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .delete-btn:hover {
+            background: #dc2626;
+            color: white;
+        }
+        
+        /* 响应式适配 */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                position: relative;
+                top: 0;
+            }
+            
+            .resume-page {
+                width: 100%;
+                padding: 20px;
+                min-height: auto;
+            }
+        }
+        
+        @media (max-width: 700px) {
+            .resume-content {
+                padding: 15px;
+            }
+            
+            .photo-container {
+                position: relative;
+                top: 0;
+                right: 0;
+                width: 100px;
+                height: 130px;
+                margin: 0 auto 15px;
+            }
+            
+            .contact {
+                gap: 0.8rem;
+                justify-content: flex-start;
+                font-size: 13px;
+            }
+            
+            .item-header, .edu-header {
+                flex-direction: column;
+            }
+            
+            .date, .edu-date {
+                margin-top: 0.2rem;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .job-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        /* PDF选项面板 */
+        .pdf-options {
+            background: rgba(37, 99, 235, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .option-row label {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+        
+        .option-row select {
+            width: 120px;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* 分页指示器 */
+        .page-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .page-indicator-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-indicator-btn.active {
+            background: var(--primary-color);
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧控制面板 -->
+        <div class="control-panel">
+            <h2 class="panel-title"><i class="fas fa-tools"></i> 简历编辑器</h2>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-camera"></i> 照片上传</h3>
+                <div class="photo-upload">
+                    <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                    <button class="btn" id="uploadPhotoBtn">
+                        <i class="fas fa-upload"></i> 选择照片
+                    </button>
+                    <div class="ai-toggle">
+                        <input type="checkbox" id="showPhoto" checked>
+                        <label for="showPhoto">在简历中显示照片</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-paint-brush"></i> 主题颜色</h3>
+                <div class="color-options">
+                    <div class="color-option active" style="background-color: #2563eb;" data-color="#2563eb"></div>
+                    <div class="color-option" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                    <div class="color-option" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                    <div class="color-option" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                    <div class="color-option" style="background-color: #10b981;" data-color="#10b981"></div>
+                    <div class="color-option" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-moon"></i> 颜色模式</h3>
+                <div class="theme-toggle">
+                    <div class="theme-btn active" data-theme="light">浅色模式</div>
+                    <div class="theme-btn" data-theme="dark">深色模式</div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-file-export"></i> 导出选项</h3>
+                <div class="export-options">
+                    <button class="btn" id="exportPdf">
+                        <i class="fas fa-file-pdf"></i> 导出PDF
+                    </button>
+                </div>
+                
+                <div class="pdf-options">
+                    <div class="option-row">
+                        <label>PDF类型：</label>
+                        <select id="pdfType">
+                            <option value="text">文本型 (小文件)</option>
+                            <option value="image">图像型 (原样保留)</option>
+                        </select>
+                    </div>
+                    <div class="option-row">
+                        <label>照片质量：</label>
+                        <select id="photoQuality">
+                            <option value="medium">中等</option>
+                            <option value="high">高质量</option>
+                            <option value="low">低质量</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline" id="saveLocal">
+                    <i class="fas fa-save"></i> 保存到本地
+                </button>
+                <button class="btn btn-outline" id="loadLocal">
+                    <i class="fas fa-folder-open"></i> 从本地加载
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-robot"></i> AI提示设置</h3>
+                <div class="ai-toggle">
+                    <input type="checkbox" id="showAiTips" checked>
+                    <label for="showAiTips">在编辑器中显示AI提示</label>
+                </div>
+                <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                    <i class="fas fa-info-circle"></i> AI提示仅在编辑时可见，导出PDF时自动隐藏
+                </p>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-lightbulb"></i> 使用提示</h3>
+                <ul style="color: var(--text-light); padding-left: 20px; font-size: 0.9rem;">
+                    <li>教育经历是简历中<strong>必备部分</strong>，请务必填写</li>
+                    <li>应届毕业生应将教育经历放在工作经历之前</li>
+                    <li>工作10年以上可简略教育经历</li>
+                    <li>GPA高于3.0/4.0建议填写</li>
+                    <li>相关课程和荣誉奖项可增强竞争力</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 简历内容区域 -->
+        <div class="resume-container" id="resumeContent">
+            <div class="resume-pages">
+                <div class="resume-page" id="page1">
+                    <div class="page-indicator">第 1 页</div>
+                    
+                    <div class="photo-container" id="photoContainer">
+                        <div class="photo-preview" id="photoPreview">
+                            <div class="photo-placeholder">
+                                <i class="fas fa-user-circle"></i>
+                                <p>点击上传照片</p>
+                            </div>
+                        </div>
+                        <div class="photo-actions">
+                            <div class="photo-btn" id="changePhotoBtn">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="photo-btn" id="removePhotoBtn">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-content">
+                        <header>
+                            <h1 contenteditable="true">张明</h1>
+                            <div class="job-title" contenteditable="true">高级产品经理 | 用户增长方向</div>
+                            <div class="contact">
+                                <div class="contact-item" contenteditable="true">📱 13800138000</div>
+                                <div class="contact-item" contenteditable="true">✉️ zhangming@email.com</div>
+                                <div class="contact-item" contenteditable="true">📍 上海 | 北京</div>
+                                <div class="contact-item" contenteditable="true">🔗 portfolio.com/zhangming</div>
+                            </div>
+                        </header>
+
+                        <section id="summary">
+                            <h2>职业摘要</h2>
+                            <div class="summary" contenteditable="true">
+                                5年互联网产品经验，专注用户增长与商业化设计。主导3款百万级DAU产品迭代，曾实现30天新用户增长120%，付费转化率提升18%。擅长数据驱动决策与跨部门协作，获2024年度公司创新奖。
+                            </div>
+                        </section>
+
+                        <section id="education">
+                            <h2>
+                                教育经历
+                                <button class="add-btn" id="addEducation">+</button>
+                            </h2>
+                            
+                            <div class="education-item">
+                                <button class="delete-btn">×</button>
+                                <div class="edu-header">
+                                    <div class="school-name" contenteditable="true">北京大学</div>
+                                    <div class="edu-date" contenteditable="true">2016年9月 - 2020年6月</div>
+                                </div>
+                                <div class="degree-row">
+                                    <div class="degree-type">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <select class="degree-type-select">
+                                            <option>本科</option>
+                                            <option>硕士</option>
+                                            <option>博士</option>
+                                        </select>
+                                    </div>
+                                    <div class="degree" contenteditable="true">计算机科学</div>
+                                    <div class="gpa">
+                                        <span>GPA:</span>
+                                        <input type="text" value="3.8/4.0">
+                                    </div>
+                                </div>
+                                <ul>
+                                    <li contenteditable="true">主修课程：数据结构、算法分析、人工智能、产品设计</li>
+                                    <li contenteditable="true">荣誉：校级优秀毕业生、科技创新奖学金</li>
+                                </ul>
+                            </div>
+
+                            <div class="education-item">
+                                <button class="delete-btn">×</button>
+                                <div class="edu-header">
+                                    <div class="school-name" contenteditable="true">清华大学</div>
+                                    <div class="edu-date" contenteditable="true">2020年9月 - 2022年6月</div>
+                                </div>
+                                <div class="degree-row">
+                                    <div class="degree-type">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <select class="degree-type-select">
+                                            <option>本科</option>
+                                            <option selected>硕士</option>
+                                            <option>博士</option>
+                                        </select>
+                                    </div>
+                                    <div class="degree" contenteditable="true">工商管理</div>
+                                    <div class="gpa">
+                                        <span>GPA:</span>
+                                        <input type="text" value="3.9/4.0">
+                                    </div>
+                                </div>
+                                <ul>
+                                    <li contenteditable="true">主修课程：商业分析、产品管理、市场营销、组织行为学</li>
+                                    <li contenteditable="true">荣誉：院长奖学金、MBA案例大赛冠军</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <section id="experience">
+                            <h2>
+                                工作经历
+                                <button class="add-btn" id="addExperience">+</button>
+                            </h2>
+                            
+                            <div class="experience-item">
+                                <button class="delete-btn">×</button>
+                                <div class="item-header">
+                                    <div class="company" contenteditable="true">腾讯 · 微信事业群</div>
+                                    <div class="date" contenteditable="true">2022年6月 - 至今</div>
+                                </div>
+                                <div class="position" contenteditable="true">高级产品经理（用户增长）</div>
+                                <ul>
+                                    <li contenteditable="true">重构新用户引导流程，首周留存率提升<span class="highlight">32%</span>，获季度创新项目金奖</li>
+                                    <li contenteditable="true">设计社交裂变增长模型，3个月带来<span class="highlight">180万</span>新增用户，获客成本降低<span class="highlight">40%</span></li>
+                                    <li contenteditable="true">主导AB实验平台升级，实验迭代效率提升<span class="highlight">50%</span>，支持日均20+实验并行</li>
+                                </ul>
+                            </div>
+
+                            <div class="experience-item">
+                                <button class="delete-btn">×</button>
+                                <div class="item-header">
+                                    <div class="company" contenteditable="true">字节跳动 · 抖音电商</div>
+                                    <div class="date" contenteditable="true">2020年3月 - 2022年5月</div>
+                                </div>
+                                <div class="position" contenteditable="true">产品经理</div>
+                                <ul>
+                                    <li contenteditable="true">设计直播购物车优化方案，下单转化率提升<span class="highlight">22%</span>，GMV月增<span class="highlight">1.2亿</span></li>
+                                    <li contenteditable="true">搭建商家成长体系，优质商家留存率提高<span class="highlight">35%</span></li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <section id="projects">
+                            <h2>
+                                关键项目
+                                <button class="add-btn" id="addProject">+</button>
+                            </h2>
+                            <div class="project-item">
+                                <button class="delete-btn">×</button>
+                                <div class="item-header">
+                                    <div class="project-name" contenteditable="true">微信「购物圈」社交电商体系</div>
+                                    <div class="date" contenteditable="true">2023年3月-2023年10月</div>
+                                </div>
+                                <ul>
+                                    <li contenteditable="true">从0到1设计好友拼团系统，上线首月带动<span class="highlight">86万</span>笔订单</li>
+                                    <li contenteditable="true">建立UGC内容激励体系，用户内容贡献量提升<span class="highlight">150%</span></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                
+                <div class="resume-page" id="page2">
+                    <div class="page-indicator">第 2 页</div>
+                    <div class="resume-content">
+                        <section id="skills">
+                            <h2>
+                                技能证书
+                                <button class="add-btn" id="addSkill">+</button>
+                            </h2>
+                            <div class="skills-container">
+                                <div class="skill-tag" contenteditable="true">增长黑客方法论</div>
+                                <div class="skill-tag" contenteditable="true">SQL/Python数据分析</div>
+                                <div class="skill-tag" contenteditable="true">用户行为分析</div>
+                                <div class="skill-tag" contenteditable="true">Axure/Sketch</div>
+                                <div class="skill-tag" contenteditable="true">PMP认证</div>
+                                <div class="skill-tag" contenteditable="true">Google Analytics</div>
+                                <div class="skill-tag" contenteditable="true">敏捷开发</div>
+                                <div class="skill-tag" contenteditable="true">用户调研</div>
+                                <div class="skill-tag" contenteditable="true">A/B测试</div>
+                                <div class="skill-tag" contenteditable="true">数据可视化</div>
+                                <div class="skill-tag" contenteditable="true">团队管理</div>
+                                <div class="skill-tag" contenteditable="true">跨部门协作</div>
+                            </div>
+                        </section>
+
+                        <section id="languages">
+                            <h2>语言能力</h2>
+                            <div class="skills-container">
+                                <div class="skill-tag" contenteditable="true">中文（母语）</div>
+                                <div class="skill-tag" contenteditable="true">英语（专业八级）</div>
+                                <div class="skill-tag" contenteditable="true">日语（N2）</div>
+                            </div>
+                        </section>
+
+                        <section id="certificates">
+                            <h2>专业证书</h2>
+                            <ul>
+                                <li contenteditable="true">PMP项目管理专业人士认证（2023）</li>
+                                <li contenteditable="true">Google Analytics 高级认证（2022）</li>
+                                <li contenteditable="true">AWS云计算解决方案架构师（2021）</li>
+                                <li contenteditable="true">Scrum Master认证（2020）</li>
+                            </ul>
+                        </section>
+
+                        <section id="awards">
+                            <h2>荣誉奖项</h2>
+                            <ul>
+                                <li contenteditable="true">2024年腾讯年度创新奖</li>
+                                <li contenteditable="true">2023年微信事业部最佳产品设计奖</li>
+                                <li contenteditable="true">2022年字节跳动优秀员工</li>
+                                <li contenteditable="true">2020年清华大学优秀毕业生</li>
+                            </ul>
+                        </section>
+
+                        <section id="ai-tips">
+                            <h2>AI优化提示</h2>
+                            <div class="ai-tips">
+                                <ul>
+                                    <li>教育经历已添加：<strong>北京大学（本科）、清华大学（硕士）</strong></li>
+                                    <li>教育背景<strong>完整且突出</strong>，符合专业岗位要求</li>
+                                    <li>关键词已包含：<strong>用户增长、转化率提升、AB实验、GMV、留存率</strong></li>
+                                    <li>量化成果占比：<strong>92%</strong>的工作经历含具体数据</li>
+                                    <li>建议投递时增加：<strong>"商业化变现"、"私域运营"</strong>等岗位相关术语</li>
+                                    <li>AI提示内容<strong>不会</strong>出现在最终导出的简历中</li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicators">
+                <div class="page-indicator-btn active" data-page="1"></div>
+                <div class="page-indicator-btn" data-page="2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">操作成功!</span>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    
+    <script>
+        // 初始化变量
+        const { jsPDF } = window.jspdf;
+        
+        // DOM元素
+        const photoUpload = document.getElementById('photoUpload');
+        const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+        const photoPreview = document.getElementById('photoPreview');
+        const changePhotoBtn = document.getElementById('changePhotoBtn');
+        const removePhotoBtn = document.getElementById('removePhotoBtn');
+        const showPhotoCheckbox = document.getElementById('showPhoto');
+        const showAiTipsCheckbox = document.getElementById('showAiTips');
+        const aiTipsSection = document.getElementById('ai-tips');
+        const pdfTypeSelect = document.getElementById('pdfType');
+        const photoQualitySelect = document.getElementById('photoQuality');
+        const pageIndicatorBtns = document.querySelectorAll('.page-indicator-btn');
+        const pages = document.querySelectorAll('.resume-page');
+        
+        // 照片上传功能
+        uploadPhotoBtn.addEventListener('click', () => photoUpload.click());
+        changePhotoBtn.addEventListener('click', () => photoUpload.click());
+        
+        photoUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // 检查文件大小
+                if (file.size > 2 * 1024 * 1024) { // 2MB
+                    showNotification('照片文件过大，请选择小于2MB的图片');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    photoPreview.style.backgroundImage = `url(${event.target.result})`;
+                    photoPreview.innerHTML = '';
+                    showPhotoCheckbox.checked = true;
+                    saveToLocalStorage();
+                    showNotification('照片上传成功');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 移除照片
+        removePhotoBtn.addEventListener('click', function() {
+            photoPreview.style.backgroundImage = '';
+            photoPreview.innerHTML = `
+                <div class="photo-placeholder">
+                    <i class="fas fa-user-circle"></i>
+                    <p>点击上传照片</p>
+                </div>
+            `;
+            showPhotoCheckbox.checked = false;
+            saveToLocalStorage();
+            showNotification('照片已移除');
+        });
+        
+        // 显示/隐藏照片
+        showPhotoCheckbox.addEventListener('change', function() {
+            const photoContainer = document.getElementById('photoContainer');
+            photoContainer.style.display = this.checked ? 'flex' : 'none';
+            saveToLocalStorage();
+        });
+        
+        // 显示/隐藏AI提示
+        showAiTipsCheckbox.addEventListener('change', function() {
+            aiTipsSection.style.display = this.checked ? 'block' : 'none';
+            saveToLocalStorage();
+        });
+        
+        // 页面导航
+        pageIndicatorBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const pageNum = this.dataset.page;
+                
+                // 更新按钮状态
+                pageIndicatorBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 滚动到对应页面
+                document.getElementById(`page${pageNum}`).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 主题切换功能
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.body.setAttribute('data-theme', this.dataset.theme);
+                saveToLocalStorage();
+            });
+        });
+        
+        // 颜色选择功能
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                document.documentElement.style.setProperty('--primary-color', this.dataset.color);
+                saveToLocalStorage();
+            });
+        });
+        
+        // 添加教育经历
+        document.getElementById('addEducation').addEventListener('click', function() {
+            const educationSection = document.getElementById('education');
+            const newEducation = document.createElement('div');
+            newEducation.className = 'education-item';
+            newEducation.innerHTML = `
+                <button class="delete-btn">×</button>
+                <div class="edu-header">
+                    <div class="school-name" contenteditable="true">新学校名称</div>
+                    <div class="edu-date" contenteditable="true">YYYY年MM月 - YYYY年MM月</div>
+                </div>
+                <div class="degree-row">
+                    <div class="degree-type">
+                        <i class="fas fa-graduation-cap"></i>
+                        <select class="degree-type-select">
+                            <option>本科</option>
+                            <option>硕士</option>
+                            <option>博士</option>
+                        </select>
+                    </div>
+                    <div class="degree" contenteditable="true">学位 | 专业</div>
+                    <div class="gpa">
+                        <span>GPA:</span>
+                        <input type="text" value="0.0/4.0">
+                    </div>
+                </div>
+                <ul>
+                    <li contenteditable="true">主修课程：相关课程1、相关课程2</li>
+                    <li contenteditable="true">荣誉：奖学金、竞赛奖项等</li>
+                </ul>
+            `;
+            educationSection.appendChild(newEducation);
+            attachDeleteEvent(newEducation.querySelector('.delete-btn'));
+            saveToLocalStorage();
+            showNotification('已添加新的教育经历');
+        });
+        
+        // 添加工作经历
+        document.getElementById('addExperience').addEventListener('click', function() {
+            const experienceSection = document.getElementById('experience');
+            const newExperience = document.createElement('div');
+            newExperience.className = 'experience-item';
+            newExperience.innerHTML = `
+                <button class="delete-btn">×</button>
+                <div class="item-header">
+                    <div class="company" contenteditable="true">新公司名称</div>
+                    <div class="date" contenteditable="true">YYYY年MM月 - YYYY年MM月</div>
+                </div>
+                <div class="position" contenteditable="true">职位名称</div>
+                <ul>
+                    <li contenteditable="true">在此描述您的成就，尽量包含量化数据，如<span class="highlight">提升效率30%</span></li>
+                    <li contenteditable="true">第二项成就描述...</li>
+                </ul>
+            `;
+            experienceSection.appendChild(newExperience);
+            attachDeleteEvent(newExperience.querySelector('.delete-btn'));
+            saveToLocalStorage();
+            showNotification('已添加新的工作经历');
+        });
+        
+        // 添加项目
+        document.getElementById('addProject').addEventListener('click', function() {
+            const projectSection = document.getElementById('projects');
+            const newProject = document.createElement('div');
+            newProject.className = 'project-item';
+            newProject.innerHTML = `
+                <button class="delete-btn">×</button>
+                <div class="item-header">
+                    <div class="project-name" contenteditable="true">新项目名称</div>
+                    <div class="date" contenteditable="true">YYYY年MM月 - YYYY年MM月</div>
+                </div>
+                <ul>
+                    <li contenteditable="true">在此描述项目成果，尽量包含量化数据，如<span class="highlight">提升效率30%</span></li>
+                    <li contenteditable="true">第二项成果描述...</li>
+                </ul>
+            `;
+            projectSection.appendChild(newProject);
+            attachDeleteEvent(newProject.querySelector('.delete-btn'));
+            saveToLocalStorage();
+            showNotification('已添加新的项目');
+        });
+        
+        // 添加技能
+        document.getElementById('addSkill').addEventListener('click', function() {
+            const skillsContainer = document.querySelector('.skills-container');
+            const newSkill = document.createElement('div');
+            newSkill.className = 'skill-tag';
+            newSkill.contentEditable = true;
+            newSkill.textContent = '新技能';
+            skillsContainer.appendChild(newSkill);
+            saveToLocalStorage();
+            showNotification('已添加新技能');
+        });
+        
+        // 删除功能
+        function attachDeleteEvent(btn) {
+            btn.addEventListener('click', function() {
+                this.parentElement.remove();
+                saveToLocalStorage();
+                showNotification('已删除项目');
+            });
+        }
+        
+        // 初始化删除按钮事件
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            attachDeleteEvent(btn);
+        });
+        
+        // 导出PDF功能
+        document.getElementById('exportPdf').addEventListener('click', function() {
+            const pdfType = pdfTypeSelect.value;
+            const photoQuality = photoQualitySelect.value;
+            
+            if (pdfType === 'text') {
+                exportTextPDF();
+            } else {
+                exportImagePDF(photoQuality);
+            }
+        });
+        
+        // 导出文本型PDF
+        function exportTextPDF() {
+            showNotification('正在生成文本型PDF...');
+            
+            // 隐藏控制按钮和AI提示
+            document.querySelectorAll('.add-btn, .delete-btn').forEach(btn => {
+                btn.style.visibility = 'hidden';
+            });
+            const aiTipsOriginalDisplay = aiTipsSection.style.display;
+            aiTipsSection.style.display = 'none';
+            
+            // 创建PDF对象
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            // 添加中文字体支持
+            pdf.addFont('ArialUnicodeMS', 'Arial', 'normal');
+            pdf.setFont('Arial');
+            
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const margin = 15;
+            let cursorY = margin;
+            
+            // 添加姓名和职位
+            const name = document.querySelector('h1').textContent;
+            const jobTitle = document.querySelector('.job-title').textContent;
+            
+            pdf.setFontSize(20);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(name, pageWidth/2, cursorY, { align: 'center' });
+            cursorY += 10;
+            
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(jobTitle, pageWidth/2, cursorY, { align: 'center' });
+            cursorY += 15;
+            
+            // 添加联系信息
+            const contactItems = document.querySelectorAll('.contact-item');
+            let contactText = '';
+            contactItems.forEach((item, index) => {
+                contactText += item.textContent.trim();
+                if (index < contactItems.length - 1) contactText += ' | ';
+            });
+            
+            pdf.setFontSize(10);
+            pdf.text(contactText, pageWidth/2, cursorY, { align: 'center' });
+            cursorY += 15;
+            
+            // 添加摘要
+            const summary = document.querySelector('.summary').textContent;
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('职业摘要', margin, cursorY);
+            cursorY += 8;
+            
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'normal');
+            const splitSummary = pdf.splitTextToSize(summary, pageWidth - margin * 2);
+            splitSummary.forEach(text => {
+                if (cursorY > 280) {
+                    pdf.addPage();
+                    cursorY = margin;
+                }
+                pdf.text(text, margin, cursorY);
+                cursorY += 7;
+            });
+            cursorY += 10;
+            
+            // 添加教育经历
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('教育经历', margin, cursorY);
+            cursorY += 8;
+            
+            const educations = document.querySelectorAll('.education-item');
+            educations.forEach(edu => {
+                const school = edu.querySelector('.school-name').textContent;
+                const date = edu.querySelector('.edu-date').textContent;
+                const degree = edu.querySelector('.degree').textContent;
+                const items = edu.querySelectorAll('li');
+                
+                pdf.setFontSize(11);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(school, margin, cursorY);
+                
+                pdf.setFont(undefined, 'normal');
+                pdf.text(date, pageWidth - margin, cursorY, { align: 'right' });
+                cursorY += 5;
+                
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'italic');
+                pdf.text(degree, margin, cursorY);
+                cursorY += 5;
+                
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'normal');
+                items.forEach(item => {
+                    const itemText = '• ' + item.textContent.replace('•', '').trim();
+                    const splitItem = pdf.splitTextToSize(itemText, pageWidth - margin * 2);
+                    
+                    splitItem.forEach(text => {
+                        if (cursorY > 280) {
+                            pdf.addPage();
+                            cursorY = margin;
+                        }
+                        pdf.text(text, margin + 5, cursorY);
+                        cursorY += 5;
+                    });
+                    cursorY += 2;
+                });
+                
+                cursorY += 5;
+            });
+            
+            // 保存文件
+            pdf.save('个人简历-文本版.pdf');
+            
+            // 恢复按钮和AI提示
+            document.querySelectorAll('.add-btn, .delete-btn').forEach(btn => {
+                btn.style.visibility = 'visible';
+            });
+            aiTipsSection.style.display = aiTipsOriginalDisplay;
+            
+            showNotification('文本型PDF导出成功！文件大小约200KB');
+        }
+        
+        // 导出图像型PDF（支持多页）
+        function exportImagePDF(quality) {
+            showNotification('正在生成图像型PDF...');
+            
+            // 设置图片质量
+            let scale = 1.5;
+            let imageQuality = 0.9;
+            
+            if (quality === 'low') {
+                scale = 1.0;
+                imageQuality = 0.7;
+            } else if (quality === 'high') {
+                scale = 2.0;
+                imageQuality = 0.95;
+            }
+            
+            // 隐藏控制按钮和AI提示
+            document.querySelectorAll('.add-btn, .delete-btn').forEach(btn => {
+                btn.style.visibility = 'hidden';
+            });
+            const aiTipsOriginalDisplay = aiTipsSection.style.display;
+            aiTipsSection.style.display = 'none';
+            
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const promises = [];
+            
+            // 处理每一页
+            pages.forEach((page, index) => {
+                promises.push(new Promise((resolve) => {
+                    html2canvas(page, {
+                        scale: scale,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: getComputedStyle(page).backgroundColor
+                    }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/jpeg', imageQuality);
+                        const imgWidth = 210; // A4纸宽度
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        
+                        if (index > 0) {
+                            pdf.addPage();
+                        }
+                        
+                        // 计算垂直居中位置
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        const yPos = (pageHeight - imgHeight) / 2;
+                        
+                        pdf.addImage(imgData, 'JPEG', 0, yPos, imgWidth, imgHeight);
+                        resolve();
+                    });
+                }));
+            });
+            
+            // 所有页面处理完成后保存PDF
+            Promise.all(promises).then(() => {
+                // 保存文件
+                pdf.save('个人简历-图像版.pdf');
+                
+                // 恢复按钮和AI提示
+                document.querySelectorAll('.add-btn, .delete-btn').forEach(btn => {
+                    btn.style.visibility = 'visible';
+                });
+                aiTipsSection.style.display = aiTipsOriginalDisplay;
+                
+                showNotification('图像型PDF导出成功！支持多页');
+            });
+        }
+        
+        // 本地保存功能
+        function saveToLocalStorage() {
+            const resumeContent = document.getElementById('resumeContent').innerHTML;
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const theme = document.body.getAttribute('data-theme') || 'light';
+            const showPhoto = document.getElementById('showPhoto').checked;
+            const showAiTips = document.getElementById('showAiTips').checked;
+            const photoPreviewStyle = photoPreview.style.backgroundImage;
+            
+            const resumeData = {
+                content: resumeContent,
+                color: color,
+                theme: theme,
+                showPhoto: showPhoto,
+                showAiTips: showAiTips,
+                photoPreview: photoPreviewStyle
+            };
+            
+            localStorage.setItem('resumeData', JSON.stringify(resumeData));
+        }
+        
+        // 自动保存
+        document.addEventListener('input', function() {
+            saveToLocalStorage();
+        });
+        
+        // 加载本地存储
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('resumeData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('resumeContent').innerHTML = data.content;
+                document.documentElement.style.setProperty('--primary-color', data.color);
+                document.body.setAttribute('data-theme', data.theme);
+                document.getElementById('showPhoto').checked = data.showPhoto;
+                document.getElementById('showAiTips').checked = data.showAiTips;
+                photoPreview.style.backgroundImage = data.photoPreview;
+                
+                if (data.photoPreview) {
+                    photoPreview.innerHTML = '';
+                }
+                
+                document.getElementById('photoContainer').style.display = data.showPhoto ? 'flex' : 'none';
+                aiTipsSection.style.display = data.showAiTips ? 'block' : 'none';
+                
+                // 更新UI状态
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.toggle('active', option.dataset.color === data.color);
+                });
+                
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === data.theme);
+                });
+                
+                // 重新绑定删除事件
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    attachDeleteEvent(btn);
+                });
+                
+                showNotification('已加载本地保存的简历');
+            }
+        }
+        
+        // 手动保存到本地
+        document.getElementById('saveLocal').addEventListener('click', function() {
+            saveToLocalStorage();
+            showNotification('简历已保存到浏览器本地存储');
+        });
+        
+        // 从本地加载
+        document.getElementById('loadLocal').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+        
+        // 文件导入功能
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    document.getElementById('resumeContent').innerHTML = data.content;
+                    document.documentElement.style.setProperty('--primary-color', data.color);
+                    document.body.setAttribute('data-theme', data.theme);
+                    document.getElementById('showPhoto').checked = data.showPhoto;
+                    document.getElementById('showAiTips').checked = data.showAiTips;
+                    photoPreview.style.backgroundImage = data.photoPreview;
+                    
+                    if (data.photoPreview) {
+                        photoPreview.innerHTML = '';
+                    }
+                    
+                    document.getElementById('photoContainer').style.display = data.showPhoto ? 'flex' : 'none';
+                    aiTipsSection.style.display = data.showAiTips ? 'block' : 'none';
+                    
+                    // 更新UI状态
+                    document.querySelectorAll('.color-option').forEach(option => {
+                        option.classList.toggle('active', option.dataset.color === data.color);
+                    });
+                    
+                    document.querySelectorAll('.theme-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.theme === data.theme);
+                    });
+                    
+                    // 重新绑定删除事件
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        attachDeleteEvent(btn);
+                    });
+                    
+                    showNotification('简历导入成功！');
+                } catch (error) {
+                    showNotification('文件格式错误，导入失败');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // 显示通知
+        function showNotification(text) {
+            const notification = document.getElementById('notification');
+            const textElement = document.getElementById('notificationText');
+            
+            textElement.textContent = text;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 初始化加载
+        window.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            
+            // 高亮量化数据
+            document.querySelectorAll('li').forEach(li => {
+                li.innerHTML = li.innerHTML.replace(/(\d+%|\d+万|\d+\.\d+亿|\d+万)/g, 
+                    '<span style="color:var(--primary-color);font-weight:bold">$1</span>'
+                );
+            });
+            
+            // 初始化页面指示器
+            pageIndicatorBtns[0].click();
+        });
+    </script>
+</body>
+</html>
