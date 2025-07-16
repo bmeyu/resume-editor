@@ -1216,6 +1216,8 @@
                     if (data.photoPreview) {
                         currentPhotoPreview.innerHTML = '';
                     }
+                    // 修复：为新加载的照片区域重新绑定点击事件
+                    currentPhotoPreview.addEventListener('click', () => photoUpload.click());
                 }
                 
                 const photoContainer = document.getElementById('photoContainer');
@@ -1286,6 +1288,8 @@
                         if (data.photoPreview) {
                             currentPhotoPreview.innerHTML = '';
                         }
+                        // 修复：为新加载的照片区域重新绑定点击事件
+                        currentPhotoPreview.addEventListener('click', () => photoUpload.click());
                     }
 
                     const photoContainer = document.getElementById('photoContainer');
