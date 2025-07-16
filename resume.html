@@ -20,7 +20,6 @@
         }
         
         [data-theme="dark"] {
-            --primary-color: #3b82f6;
             --text-dark: #e2e8f0;
             --text-light: #94a3b8;
             --bg-light: #1e293b;
@@ -909,6 +908,7 @@
         // 照片上传功能
         uploadPhotoBtn.addEventListener('click', () => photoUpload.click());
         changePhotoBtn.addEventListener('click', () => photoUpload.click());
+        photoPreview.addEventListener('click', () => photoUpload.click());
         
         photoUpload.addEventListener('change', function(e) {
             const file = e.target.files[0];
