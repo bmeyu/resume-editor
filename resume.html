@@ -727,6 +727,12 @@
                 <button class="btn" id="matchJobsBtn">
                     <i class="fas fa-search-plus"></i> 智能匹配岗位
                 </button>
+                <div id="jobMatchResults" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; position: relative;">
+                    <button id="closeMatchResults" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light);">&times;</button>
+                    <h4 style="margin-bottom: 10px;">匹配结果:</h4>
+                    <a id="zhipinLink" href="#" target="_blank" style="display: block; padding: 10px; margin-bottom: 5px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 4px; text-align: center;">在BOSS直聘上查看</a>
+                    <a id="liepinLink" href="#" target="_blank" style="display: block; padding: 10px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 4px; text-align: center;">在猎聘网上查看</a>
+                </div>
             </div>
             
             <div class="control-group">
@@ -1278,34 +1284,24 @@
             // 1. 定义城市代码
             const cityCodes = {
                 'zhipin': {
-                    '北京': '101010100',
-                    '上海': '101020100',
-                    '广州': '101280100',
-                    '深圳': '101280600',
-                    '杭州': '101210100',
-                    '成都': '101270100',
-                    '重庆': '101040100',
-                    '武汉': '101200100',
-                    '西安': '101110100',
-                    '南京': '101190400'
+                    '北京': '101010100', '上海': '101020100', '广州': '101280100', '深圳': '101280600', '杭州': '101210100',
+                    '成都': '101270100', '重庆': '101040100', '武汉': '101200100', '西安': '101110100', '南京': '101190400'
                 },
                 'liepin': {
-                    '北京': '010',
-                    '上海': '020',
-                    '广州': '050020',
-                    '深圳': '050090',
-                    '杭州': '070020',
-                    '成都': '280020',
-                    '重庆': '040',
-                    '武汉': '170020',
-                    '西安': '270020',
-                    '南京': '060020'
+                    '北京': '010', '上海': '020', '广州': '050020', '深圳': '050090', '杭州': '070020',
+                    '成都': '280020', '重庆': '040', '武汉': '170020', '西安': '270020', '南京': '060020'
                 }
             };
 
             // 2. 从简历提取信息
-            const jobTitle = document.querySelector('.job-title').textContent.trim().split('|')[0].trim();
-            const locationText = document.querySelector('.contact-item:nth-child(3)').textContent.trim();
+            const jobTitleElement = document.querySelector('.job-title');
+            const locationElement = document.querySelector('.contact-item:nth-child(3)');
+            if (!jobTitleElement || !locationElement) {
+                showNotification('简历信息不完整，无法匹配');
+                return;
+            }
+            const jobTitle = jobTitleElement.textContent.trim().split('|')[0].trim();
+            const locationText = locationElement.textContent.trim();
             const skills = Array.from(document.querySelectorAll('.skill-tag span')).map(s => s.textContent.trim());
 
             let city = '';
@@ -1322,7 +1318,7 @@
             }
 
             // 3. 构建查询URL
-            const queryKeywords = [jobTitle, ...skills.slice(0, 2)]; // 最多带2个技能，防止URL过长
+            const queryKeywords = [jobTitle, ...skills.slice(0, 2)];
             const encodedQuery = encodeURIComponent(queryKeywords.join(' '));
 
             const zhipinCityCode = city ? cityCodes.zhipin[city] : '';
@@ -1331,10 +1327,16 @@
             const zhipinUrl = `https://www.zhipin.com/web/geek/job?query=${encodedQuery}${zhipinCityCode ? '&city=' + zhipinCityCode : ''}`;
             const liepinUrl = `https://www.liepin.com/zhaopin/?key=${encodedQuery}${liepinCityCode ? '&city=' + liepinCityCode : ''}`;
 
-            // 4. 在新标签页打开
-            showNotification('正在为您打开招聘网站...');
-            window.open(zhipinUrl, '_blank');
-            window.open(liepinUrl, '_blank');
+            // 4. 显示结果面板
+            document.getElementById('zhipinLink').href = zhipinUrl;
+            document.getElementById('liepinLink').href = liepinUrl;
+            document.getElementById('jobMatchResults').style.display = 'block';
+            showNotification('匹配链接已生成！');
+        });
+
+        // 关闭匹配结果面板
+        document.getElementById('closeMatchResults').addEventListener('click', function() {
+            document.getElementById('jobMatchResults').style.display = 'none';
         });
         
         // 文件导入功能
