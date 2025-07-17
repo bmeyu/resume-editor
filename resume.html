@@ -1197,11 +1197,10 @@
             localStorage.setItem('resumeData', JSON.stringify(resumeData));
         }
         
-        // 自动保存
-        document.addEventListener('input', function(e) {
+        // 自动保存与实时分析
+        function handleContentChange(e) {
             // 修复：自动移除空的列表项
             if (e.target.tagName === 'LI' && e.target.textContent.trim() === '') {
-                // 延迟移除，以防用户只是想重新输入
                 setTimeout(() => {
                     if (e.target && e.target.textContent.trim() === '') {
                         e.target.remove();
@@ -1210,7 +1209,12 @@
             }
             analyzeResume(); // 实时分析
             saveToLocalStorage();
-        });
+        }
+
+        document.addEventListener('input', handleContentChange);
+        document.addEventListener('keyup', handleContentChange); // 修复：增加keyup监听以确保删除操作能被捕获
+
+        // AI简历分析功能
 
         // AI简历分析功能
         function analyzeResume() {
