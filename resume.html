@@ -886,10 +886,10 @@
                     <div class="ai-tips">
                         <ul>
                             <li id="quant-analysis-tip"><strong>量化成果分析</strong>：正在分析...</li>
+                            <li id="keyword-analysis-tip"><strong>关键词匹配度</strong>：正在分析...</li>
                             <li>关键词已包含：<strong>用户增长、转化率提升、AB实验、GMV、留存率</strong></li>
                             <li>建议投递时增加：<strong>“商业化变现”、“私域运营”</strong>等岗位相关术语</li>
                             <li>照片已上传：<strong>专业商务照</strong>（符合亚洲简历规范）</li>
-                            <li>AI提示内容<strong>不会</strong>出现在最终导出的简历中</li>
                         </ul>
                     </div>
                 </section>
@@ -1215,32 +1215,59 @@
         // AI简历分析功能
         function analyzeResume() {
             const quantTipElement = document.getElementById('quant-analysis-tip');
-            if (!quantTipElement) return;
+            const keywordTipElement = document.getElementById('keyword-analysis-tip');
+            if (!quantTipElement || !keywordTipElement) return;
 
-            // 1. 量化成果分析
+            // --- 1. 量化成果分析 ---
             const listItems = document.querySelectorAll('#experience li, #education li, #projects li');
             const totalItems = listItems.length;
             let quantifiedItems = 0;
-
-            const quantRegex = /\d|%/; // 匹配任何数字或百分号
-
+            const quantRegex = /\d|%/;
             listItems.forEach(item => {
-                if (quantRegex.test(item.textContent)) {
-                    quantifiedItems++;
-                }
+                if (quantRegex.test(item.textContent)) quantifiedItems++;
             });
 
             let quantMessage = '<strong>量化成果分析</strong>：暂无描述可分析。';
             if (totalItems > 0) {
                 const percentage = Math.round((quantifiedItems / totalItems) * 100);
                 quantMessage = `<strong>量化成果分析</strong>：您的简历中，有 <strong>${quantifiedItems}/${totalItems}</strong> 个描述点包含具体数据，占比 <strong>${percentage}%</strong>。`;
-                if (percentage < 50) {
-                    quantMessage += ' 建议增加更多量化成果！';
-                } else {
-                    quantMessage += ' 非常出色！';
-                }
+                quantMessage += percentage < 50 ? ' 建议增加更多量化成果！' : ' 非常出色！';
             }
             quantTipElement.innerHTML = quantMessage;
+
+            // --- 2. 关键词匹配度分析 ---
+            const keywordMap = {
+                '产品经理': ['用户增长', '数据分析', '需求文档', '商业化', '留存率', 'AB实验', 'GMV'],
+                '软件工程师': ['Java', 'Python', '分布式', '数据库', 'API', '微服务', 'Go'],
+                '设计师': ['Figma', 'Sketch', 'UI', 'UX', '交互设计', '设计系统', 'C4D']
+            };
+
+            const jobTitle = document.querySelector('.job-title').textContent.toLowerCase();
+            const resumeText = document.getElementById('resumeContent').textContent;
+            let targetKeywords = [];
+            let matchedJob = '通用岗位';
+
+            for (const job in keywordMap) {
+                if (jobTitle.includes(job.toLowerCase())) {
+                    targetKeywords = keywordMap[job];
+                    matchedJob = job;
+                    break;
+                }
+            }
+
+            let keywordMessage = `<strong>关键词匹配度 (${matchedJob})</strong>：`;
+            if (targetKeywords.length > 0) {
+                const foundKeywords = targetKeywords.filter(kw => resumeText.includes(kw));
+                const missingKeywords = targetKeywords.filter(kw => !resumeText.includes(kw));
+                
+                keywordMessage += `已命中 <strong>${foundKeywords.length}/${targetKeywords.length}</strong> 个核心关键词。`;
+                if (missingKeywords.length > 0) {
+                    keywordMessage += ` 建议补充：<strong>${missingKeywords.slice(0, 2).join('、')}</strong>。`;
+                }
+            } else {
+                keywordMessage += '未匹配到特定岗位关键词库，建议填写明确职位，如“产品经理”。';
+            }
+            keywordTipElement.innerHTML = keywordMessage;
         }
         
         // 加载本地存储
