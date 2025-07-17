@@ -885,8 +885,8 @@
                     <h2>AI优化提示</h2>
                     <div class="ai-tips">
                         <ul>
+                            <li id="quant-analysis-tip"><strong>量化成果分析</strong>：正在分析...</li>
                             <li>关键词已包含：<strong>用户增长、转化率提升、AB实验、GMV、留存率</strong></li>
-                            <li>量化成果占比：<strong>92%</strong>的工作经历含具体数据</li>
                             <li>建议投递时增加：<strong>“商业化变现”、“私域运营”</strong>等岗位相关术语</li>
                             <li>照片已上传：<strong>专业商务照</strong>（符合亚洲简历规范）</li>
                             <li>AI提示内容<strong>不会</strong>出现在最终导出的简历中</li>
@@ -1208,8 +1208,42 @@
                     }
                 }, 1500);
             }
+            analyzeResume(); // 实时分析
             saveToLocalStorage();
         });
+
+        // AI简历分析功能
+        function analyzeResume() {
+            const quantTipElement = document.getElementById('quant-analysis-tip');
+            if (!quantTipElement) return;
+
+            // 1. 量化成果分析
+            const listItems = document.querySelectorAll('#experience li, #education li, #projects li');
+            const totalItems = listItems.length;
+            let quantifiedItems = 0;
+
+            const quantRegex = /\d|%/; // 匹配任何数字或百分号
+
+            listItems.forEach(item => {
+                if (quantRegex.test(item.textContent)) {
+                    quantifiedItems++;
+                }
+            });
+
+            let quantMessage = '<strong>量化成果分析</strong>：暂无描述可分析。';
+            if (totalItems > 0) {
+                const percentage = Math.round((quantifiedItems / totalItems) * 100);
+                quantMessage = `<strong>量化成果分析</strong>：您的简历中，有 <strong>${quantifiedItems}/${totalItems}</strong> 个描述点包含具体数据，占比 <strong>${percentage}%</strong>。`;
+                if (percentage < 50) {
+                    quantMessage += ' 建议增加更多量化成果！';
+                } else {
+                    quantMessage += ' 非常出色！';
+                }
+            }
+            quantTipElement.innerHTML = quantMessage;
+        }
+        
+        // 加载本地存储
         
         // 加载本地存储
         function loadFromLocalStorage() {
@@ -1413,6 +1447,7 @@
         // 初始化加载
         window.addEventListener('DOMContentLoaded', function() {
             loadFromLocalStorage();
+            analyzeResume(); // 页面加载后立即分析一次
             
             // 高亮量化数据
             document.querySelectorAll('li').forEach(li => {
