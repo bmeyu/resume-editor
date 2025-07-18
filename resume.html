@@ -926,11 +926,11 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    photoPreview.style.backgroundImage = `url(${event.target.result})`;
-                    photoPreview.innerHTML = '';
-                    showPhotoCheckbox.checked = true;
-                    saveToLocalStorage();
-                    showNotification('照片上传成功');
+                photoPreview.style.backgroundImage = `url(${event.target.result})`;
+                photoPreview.innerHTML = '';
+                showPhotoCheckbox.checked = true;
+                saveToLocalStorage();
+                // 已移除照片上传成功通知
                 };
                 reader.readAsDataURL(file);
             }
@@ -947,7 +947,6 @@
             `;
             showPhotoCheckbox.checked = false;
             saveToLocalStorage();
-            showNotification('照片已移除');
         });
         
         // 显示/隐藏照片
@@ -1268,7 +1267,7 @@
                     keywordMessage += ` 建议补充：<strong>${missingKeywords.slice(0, 2).join('、')}</strong>。`;
                 }
             } else {
-                keywordMessage += '未匹配到特定岗位关键词库，建议填写明确职位，如“产品经理”。';
+                keywordMessage += '未匹配到特定岗位关键词库，建议填写明确职位，如"产品经理"。';
             }
             keywordTipElement.innerHTML = keywordMessage;
         }
