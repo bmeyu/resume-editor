@@ -1,0 +1,280 @@
+
+
+const i18n = {
+  zh: {
+    // Control Panel
+    resumeEditor: '简历编辑器',
+    photoUpload: '照片上传',
+    selectPhoto: '选择照片',
+    showPhotoInResume: '在简历中显示照片',
+    themeColor: '主题颜色',
+    colorMode: '颜色模式',
+    lightMode: '浅色模式',
+    darkMode: '深色模式',
+    exportOptions: '导出选项',
+    exportPdf: '导出PDF',
+    saveToLocal: '保存到本地',
+    loadFromLocal: '从本地加载',
+    resetTemplate: '重置为模板',
+    smartMatching: '智能匹配',
+    matchJobs: '智能匹配岗位',
+    matchResults: '匹配结果:',
+    viewOnZhipin: '在BOSS直聘上查看',
+    viewOnLiepin: '在猎聘网上查看',
+    aiTipsSettings: 'AI提示设置',
+    showAiTipsInEditor: '在编辑器中显示AI提示',
+    aiTipsInfo: 'AI提示仅在编辑时可见，导出PDF时自动隐藏',
+    usageTips: '使用提示',
+    usageTip1: '点击任何文本区域可直接编辑内容',
+    usageTip2: '照片建议使用专业证件照或商务照',
+    usageTip3: '在北美求职通常不放照片，亚洲/欧洲建议放',
+    usageTip4: 'AI提示仅用于编辑参考，不会出现在最终简历',
+    
+    // Resume Content
+    uploadPhotoPlaceholder: '点击上传照片',
+    jobTitlePlaceholder: '高级产品经理 | 用户增长方向',
+    contactPhone: '📱 13800138000',
+    contactEmail: '✉️ zhangming@email.com',
+    contactLocation: '📍 上海 | 北京',
+    contactPortfolio: '🔗 portfolio.com/zhangming',
+    
+    // Sections
+    summary: '职业摘要',
+    experience: '工作经历',
+    education: '教育经历',
+    projects: '关键项目',
+    skills: '技能证书',
+    aiOptimizationTips: 'AI优化提示',
+    
+    // Default Resume Data
+    name: '张明',
+    summaryContent: '5年互联网产品经验，专注用户增长与商业化设计。主导3款百万级DAU产品迭代，曾实现30天新用户增长120%，付费转化率提升18%。擅长数据驱动决策与跨部门协作，获2024年度公司创新奖。',
+    exp1Company: '腾讯 · 微信事业群',
+    exp1Date: '2022年6月 - 至今',
+    exp1Position: '高级产品经理（用户增长）',
+    exp1Desc1: '重构新用户引导流程，首周留存率提升32%，获季度创新项目金奖',
+    exp1Desc2: '设计社交裂变增长模型，3个月带来180万新增用户，获客成本降低40%',
+    exp1Desc3: '主导AB实验平台升级，实验迭代效率提升50%，支持日均20+实验并行',
+    exp2Company: '字节跳动 · 抖音电商',
+    exp2Date: '2020年3月 - 2022年5月',
+    exp2Position: '产品经理',
+    exp2Desc1: '设计直播购物车优化方案，下单转化率提升22%，GMV月增1.2亿',
+    exp2Desc2: '搭建商家成长体系，优质商家留存率提高35%',
+    edu1School: '北京大学',
+    edu1Date: '2016年9月 - 2020年6月',
+    edu1Degree: '硕士 · 计算机科学',
+    edu1Desc1: '专业排名：Top 5%',
+    edu1Desc2: '获得国家奖学金、北京市优秀毕业生',
+    proj1Name: '微信「购物圈」社交电商体系',
+    proj1Date: '2023年3月-2023年10月',
+    proj1Desc1: '从0到1设计好友拼团系统，上线首月带动86万笔订单',
+    proj1Desc2: '建立UGC内容激励体系，用户内容贡献量提升150%',
+    skill1: '增长黑客方法论',
+    skill2: 'SQL/Python数据分析',
+    skill3: '用户行为分析',
+    skill4: 'Axure/Sketch',
+    skill5: 'PMP认证',
+    skill6: 'Google Analytics',
+
+    // Dynamic Content & Notifications
+    newCompanyName: '新公司名称',
+    newDatePlaceholder: 'YYYY年MM月 - YYYY年MM月',
+    newPositionName: '职位名称',
+    newAchievementDesc: '在此描述您的成就，尽量包含量化数据，如<span class=\"highlight\">提升效率30%<\/span>',
+    newAchievementDesc2: '第二项成就描述...',
+    newProjectName: '新项目名称',
+    newProjectAchievement: '在此描述项目成果，尽量包含量化数据，如<span class=\"highlight\">提升效率30%<\/span>',
+    newSchoolName: '学校名称',
+    newDegree: '学位 · 专业',
+    newAcademicAchievement: '在此描述您的学术成就或相关课程',
+    newSkill: '新技能',
+    notifAddExperience: '已添加新的工作经历',
+    notifAddProject: '已添加新的项目',
+    notifAddEducation: '已添加新的教育经历',
+    notifAddSkill: '已添加新技能',
+    notifDeleteItem: '已删除条目',
+    notifDeleteSkill: '已删除技能',
+    notifGeneratingPDF: '正在生成PDF，请稍候...', 
+    notifPDFSuccess: 'PDF导出成功',
+    notifPDFSuccessPage: '页',
+    notifPDFFail: 'PDF生成失败: ',
+    notifSavedToBrowser: '简历已保存到浏览器本地存储',
+    notifLoadedFromLocal: '已加载本地保存的简历',
+    notifResetConfirm: '确定要重置为原始模板吗？这将清除所有已编辑和保存的内容。',
+    notifMatchGenerated: '匹配链接已生成！',
+    notifResumeIncomplete: '简历信息不完整，无法匹配',
+    notifEnterJobTitle: '请先填写职位名称',
+    notifImportSuccess: '简历导入成功！',
+    notifImportError: '文件格式错误，导入失败',
+
+    // AI Analysis Tips
+    quantAnalysisTitle: '量化成果分析',
+    quantAnalysisNoData: '暂无描述可分析。',
+    quantAnalysisSummary: '您的简历中，有 {quantified} 个描述点包含具体数据，占比 {percentage}。',
+    quantAnalysisSuggestion: ' 建议增加更多量化成果！',
+    quantAnalysisExcellent: ' 非常出色！',
+    keywordAnalysisTitle: '关键词匹配度',
+    keywordAnalysisDefaultJob: '通用岗位',
+    keywordAnalysisSummary: '已命中 {found} 个核心关键词。',
+    keywordAnalysisSuggestion: ' 建议补充：{keywords}。',
+    keywordAnalysisNoKeywords: '未匹配到特定岗位关键词库，建议填写明确职位，如“产品经理”。',
+
+    // Keyword Map for AI Analysis
+    keywordMap: {
+        'productManager': {
+            name: '产品经理',
+            keywords: ['用户增长', '数据分析', '需求文档', '商业化', '留存率', 'AB实验', 'GMV']
+        },
+        'softwareEngineer': {
+            name: '软件工程师',
+            keywords: ['Java', 'Python', '分布式', '数据库', 'API', '微服务', 'Go']
+        },
+        'designer': {
+            name: '设计师',
+            keywords: ['Figma', 'Sketch', 'UI', 'UX', '交互设计', '设计系统', 'C4D']
+        },
+        'projectManager': {
+            name: '项目管理',
+            keywords: ['PMP', '敏捷开发', 'Scrum', '项目进度', '风险控制', '沟通协调', 'Jira']
+        }
+    }
+  },
+  en: {
+    // Control Panel
+    resumeEditor: 'Resume Editor',
+    photoUpload: 'Photo Upload',
+    selectPhoto: 'Select Photo',
+    showPhotoInResume: 'Show photo in resume',
+    themeColor: 'Theme Color',
+    colorMode: 'Color Mode',
+    lightMode: 'Light',
+    darkMode: 'Dark',
+    exportOptions: 'Export Options',
+    exportPdf: 'Export PDF',
+    saveToLocal: 'Save to Local',
+    loadFromLocal: 'Load from Local',
+    resetTemplate: 'Reset Template',
+    smartMatching: 'Smart Matching',
+    matchJobs: 'Match Jobs',
+    matchResults: 'Matching Results:',
+    viewOnZhipin: 'View on Zhipin.com',
+    viewOnLiepin: 'View on Liepin.com',
+    aiTipsSettings: 'AI Tips Settings',
+    showAiTipsInEditor: 'Show AI tips in editor',
+    aiTipsInfo: 'AI tips are only visible during editing and will be hidden when exporting to PDF.',
+    usageTips: 'Usage Tips',
+    usageTip1: 'Click on any text area to edit the content directly.',
+    usageTip2: 'A professional ID photo or business photo is recommended.',
+    usageTip3: 'Photos are usually omitted for US/Canada jobs, but recommended for Asia/Europe.',
+    usageTip4: 'AI tips are for reference only and will not appear in the final resume.',
+
+    // Resume Content
+    uploadPhotoPlaceholder: 'Upload Photo',
+    jobTitlePlaceholder: 'Senior Product Manager | User Growth',
+    contactPhone: '📱 +1 (555) 123-4567',
+    contactEmail: '✉️ john.doe@email.com',
+    contactLocation: '📍 San Francisco, CA',
+    contactPortfolio: '🔗 portfolio.com/johndoe',
+
+    // Sections
+    summary: 'Professional Summary',
+    experience: 'Work Experience',
+    education: 'Education',
+    projects: 'Key Projects',
+    skills: 'Skills & Certifications',
+    aiOptimizationTips: 'AI Optimization Tips',
+
+    // Default Resume Data
+    name: 'John Doe',
+    summaryContent: 'A results-driven Product Manager with 5 years of experience in user growth and monetization. Led the iteration of 3 products with over a million DAU, achieving a 120% increase in new user growth in 30 days and an 18% uplift in conversion rates. Proficient in data-driven decision-making and cross-functional team leadership. Winner of the 2024 Company Innovation Award.',
+    exp1Company: 'Tencent · WeChat Group',
+    exp1Date: 'June 2022 - Present',
+    exp1Position: 'Senior Product Manager (User Growth)',
+    exp1Desc1: 'Redesigned the new user onboarding flow, increasing first-week retention by 32% and winning the quarterly innovation gold award.',
+    exp1Desc2: 'Developed a social fission growth model that acquired 1.8 million new users in 3 months, reducing customer acquisition cost by 40%.',
+    exp1Desc3: 'Led the upgrade of the A/B testing platform, improving iteration efficiency by 50% to support 20+ concurrent experiments daily.',
+    exp2Company: 'ByteDance · TikTok E-commerce',
+    exp2Date: 'March 2020 - May 2022',
+    exp2Position: 'Product Manager',
+    exp2Desc1: 'Optimized the live-streaming shopping cart, boosting order conversion rates by 22% and increasing monthly GMV by $120M.',
+    exp2Desc2: 'Established a merchant growth system, which improved the retention rate of high-quality merchants by 35%.',
+    edu1School: 'Stanford University',
+    edu1Date: 'Sept 2016 - June 2020',
+    edu1Degree: 'M.S. in Computer Science',
+    edu1Desc1: 'GPA: 3.9/4.0 (Top 5%)',
+    edu1Desc2: 'Recipient of the University Fellowship and Graduated with Distinction.',
+    proj1Name: 'WeChat "Shopping Circle" Social Commerce System',
+    proj1Date: 'March 2023 - Oct 2023',
+    proj1Desc1: 'Designed a "group buy" feature from scratch, driving 860,000 orders in the first month.',
+    proj1Desc2: 'Built a UGC incentive system that increased user content contributions by 150%.',
+    skill1: 'Growth Hacking',
+    skill2: 'SQL/Python Data Analysis',
+    skill3: 'User Behavior Analytics',
+    skill4: 'Axure/Sketch',
+    skill5: 'PMP Certification',
+    skill6: 'Google Analytics',
+
+    // Dynamic Content & Notifications
+    newCompanyName: 'New Company Name',
+    newDatePlaceholder: 'YYYY-MM to YYYY-MM',
+    newPositionName: 'Position Title',
+    newAchievementDesc: 'Describe your achievement here. Use metrics, e.g., <span class=\"highlight\">increased efficiency by 30%<\/span>.',
+    newAchievementDesc2: 'Second achievement...', 
+    newProjectName: 'New Project Name',
+    newProjectAchievement: 'Describe your project outcome. Use metrics, e.g., <span class=\"highlight\">increased efficiency by 30%<\/span>.',
+    newSchoolName: 'University Name',
+    newDegree: 'Degree · Major',
+    newAcademicAchievement: 'Describe your academic achievements or relevant coursework.',
+    newSkill: 'New Skill',
+    notifAddExperience: 'Added new work experience.',
+    notifAddProject: 'Added new project.',
+    notifAddEducation: 'Added new education entry.',
+    notifAddSkill: 'Added new skill.',
+    notifDeleteItem: 'Item deleted.',
+    notifDeleteSkill: 'Skill deleted.',
+    notifGeneratingPDF: 'Generating PDF, please wait...', 
+    notifPDFSuccess: 'PDF exported successfully',
+    notifPDFSuccessPage: 'pages',
+    notifPDFFail: 'PDF generation failed: ',
+    notifSavedToBrowser: 'Resume saved to browser local storage.',
+    notifLoadedFromLocal: 'Loaded saved resume from local storage.',
+    notifResetConfirm: 'Are you sure you want to reset to the original template? This will clear all edited and saved content.',
+    notifMatchGenerated: 'Matching links have been generated!',
+    notifResumeIncomplete: 'Resume information is incomplete, cannot match jobs.',
+    notifEnterJobTitle: 'Please enter a job title first.',
+    notifImportSuccess: 'Resume imported successfully!',
+    notifImportError: 'Invalid file format, import failed.',
+
+    // AI Analysis Tips
+    quantAnalysisTitle: 'Quantitative Analysis',
+    quantAnalysisNoData: 'No descriptions to analyze yet.',
+    quantAnalysisSummary: 'In your resume, {quantified} of your description points contain specific data, which is {percentage}.',
+    quantAnalysisSuggestion: ' Consider adding more quantitative results!',
+    quantAnalysisExcellent: ' Excellent!',
+    keywordAnalysisTitle: 'Keyword Match',
+    keywordAnalysisDefaultJob: 'General Position',
+    keywordAnalysisSummary: 'You have hit {found} core keywords.',
+    keywordAnalysisSuggestion: ' Consider adding: {keywords}.',
+    keywordAnalysisNoKeywords: 'No specific job keyword library matched. Please specify a clear job title, e.g., "Product Manager".',
+
+    // Keyword Map for AI Analysis
+    keywordMap: {
+        'productManager': {
+            name: 'Product Manager',
+            keywords: ['User Growth', 'Data Analysis', 'PRD', 'Monetization', 'Retention', 'A/B Testing', 'GMV']
+        },
+        'softwareEngineer': {
+            name: 'Software Engineer',
+            keywords: ['Java', 'Python', 'Distributed Systems', 'Database', 'API', 'Microservices', 'Go']
+        },
+        'designer': {
+            name: 'Designer',
+            keywords: ['Figma', 'Sketch', 'UI', 'UX', 'Interaction Design', 'Design System', 'C4D']
+        },
+        'projectManager': {
+            name: 'Project Manager',
+            keywords: ['PMP', 'Agile', 'Scrum', 'Project Timeline', 'Risk Management', 'Communication', 'Jira']
+        }
+    }
+  }
+};
